@@ -6,7 +6,798 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="MNN Japanese"/>
+<title>みんなの日本語</title><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MNN Japanese"/>
 <title>みんなの日本語</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCcXH5v8dhJA3YgUEik_od2Q9Ck34TYLsA",
+  authDomain: "mnn-japanese.firebaseapp.com",
+  projectId: "mnn-japanese",
+  storageBucket: "mnn-japanese.firebasestorage.app",
+  messagingSenderId: "4772966146",
+  appId: "1:4772966146:web:f37f3fe22e7b5e41c71c1b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window._fbLoad = async (name) => {
+  try {
+    const snap = await getDoc(doc(db, "profiles", name));
+    return snap.exists() ? snap.data().state : null;
+  } catch(e) { console.error("Load error", e); return null; }
+};
+window._fbSave = async (name, data) => {
+  try {
+    await setDoc(doc(db, "profiles", name), { state: data });
+  } catch(e) { console.error("Save error", e); }
+};
+window._fbReady = true;
+window.dispatchEvent(new Event("fbready"));
+</script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#1a1a1a;--surface:#242424;--surface2:#2c2c2c;--surface3:#333;
+  --border:#383838;--border2:#444;
+  --text:#e8e6e3;--text2:#999;--text3:#555;
+  --accent:#4d9de0;--gold:#c8973a;
+  --again:#c0392b;--hard:#e67e22;--good:#27ae60;--easy:#2980b9;
+  --again-bg:rgba(192,57,43,0.13);--hard-bg:rgba(230,126,34,0.13);
+  --good-bg:rgba(39,174,96,0.13);--easy-bg:rgba(41,128,185,0.13);
+  --font-jp:'Noto Sans JP',sans-serif;--font-ui:'DM Sans',sans-serif;
+}
+body.light{
+  --bg:#f5f5f0;--surface:#ffffff;--surface2:#f0ede8;--surface3:#e8e5e0;
+  --border:#ddd;--border2:#ccc;
+  --text:#1a1a1a;--text2:#555;--text3:#999;
+  --again-bg:rgba(192,57,43,0.08);--hard-bg:rgba(230,126,34,0.08);
+  --good-bg:rgba(39,174,96,0.08);--easy-bg:rgba(41,128,185,0.08);
+}
+.theme-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+.theme-toggle-track{width:36px;height:20px;border-radius:10px;position:relative;transition:background .2s;flex-shrink:0;}
+.theme-toggle-thumb{width:14px;height:14px;border-radius:7px;background:#fff;position:absolute;top:3px;transition:left .2s;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-ui);}
+#app{min-height:100vh;display:flex;flex-direction:column;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.btn{transition:all .13s ease;cursor:pointer;user-select:none;}
+.btn:hover{filter:brightness(1.12);}
+.btn:active{transform:scale(0.97);}
+.nav-tab{transition:all .15s;cursor:pointer;user-select:none;}
+.deck-row{transition:background .1s;cursor:pointer;}
+.deck-row:hover{background:var(--surface2)!important;}
+.rating-btn{transition:all .13s ease;cursor:pointer;}
+.rating-btn:hover{filter:brightness(1.15);transform:translateY(-1px);}
+.rating-btn:active{transform:translateY(0);}
+.lesson-chip{transition:all .12s;cursor:pointer;}
+.lesson-chip:hover{border-color:var(--accent)!important;}
+.lesson-chip.sel{background:rgba(77,157,224,0.18)!important;border-color:var(--accent)!important;color:#7ec8f4!important;}
+.card-wrap{perspective:1000px;}
+.card-inner{position:relative;width:100%;transform-style:preserve-3d;transition:transform .4s cubic-bezier(.4,0,.2,1);}
+.card-inner.flipped{transform:rotateX(180deg);}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:12px;}
+.card-back-face{transform:rotateX(180deg);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .22s ease;}
+@keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.02)}100%{transform:scale(1)}}
+.pop{animation:pop .25s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.slide-in{animation:slideIn .3s ease;}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border2);outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;}
+input[type=date]{color-scheme:dark;}
+.toggle-track{width:44px;height:24px;border-radius:12px;position:relative;transition:background .2s;cursor:pointer;flex-shrink:0;}
+.toggle-thumb{width:18px;height:18px;border-radius:9px;background:#fff;position:absolute;top:3px;transition:left .2s;}
+</style>
+</head>
+<body>
+<div id="app"><div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--text2);font-family:var(--font-ui)">Connecting...</div></div>
+
+<script>
+// ── Wait for Firebase ─────────────────────────────────────────────────────────
+function onFbReady(cb) {
+  if (window._fbReady) cb();
+  else window.addEventListener("fbready", cb, {once:true});
+}
+
+// ── RAW DATA ──────────────────────────────────────────────────────────────────
+const RAW = {"Lesson 01": [{"expression": "わたし", "meaning": "I", "reading": "わたし"}, {"expression": "あなた", "meaning": "You", "reading": "あなた"}, {"expression": "あの　ひと　（あの　かた）", "meaning": "That person, he, she", "reading": "あの　ひと　（あの　かた）"}, {"expression": "～さん", "meaning": "Mr., Ms. (polite name suffix)", "reading": "~さん"}, {"expression": "～ちゃん", "meaning": "Suffix for children's names", "reading": "~ちゃん"}, {"expression": "～人", "meaning": "Suffix meaning 'a national of'", "reading": "~じん"}, {"expression": "先生", "meaning": "Teacher, instructor", "reading": "せんせい"}, {"expression": "教師", "meaning": "Teacher, instructor", "reading": "きょうし"}, {"expression": "学生", "meaning": "Student", "reading": "がくせい"}, {"expression": "会社員", "meaning": "Company employee", "reading": "かいしゃいん"}, {"expression": "社員", "meaning": "Employee of a company", "reading": "しゃいん"}, {"expression": "銀行員", "meaning": "Bank employee", "reading": "ぎんこういん"}, {"expression": "医者", "meaning": "Medical doctor", "reading": "いしゃ"}, {"expression": "研究者", "meaning": "Researcher, scholar", "reading": "けんきゅうしゃ"}, {"expression": "大学", "meaning": "University", "reading": "だいがく"}, {"expression": "病院", "meaning": "Hospital", "reading": "びょういん"}, {"expression": "だれ（どなた）", "meaning": "Who (polite: どなた)", "reading": "だれ（どなた）"}, {"expression": "ーさい", "meaning": "- years old", "reading": "ーさい"}, {"expression": "何歳（おいくつ）", "meaning": "How old (polite: おいくつ)", "reading": "なんさい（おいくつ）"}, {"expression": "はい", "meaning": "Yes", "reading": "はい"}, {"expression": "いいえ", "meaning": "No", "reading": "いいえ"}, {"expression": "初めまして", "meaning": "How do you do (first meeting)", "reading": "はじめまして"}, {"expression": "～から　来ました", "meaning": "I'm from ~ (country)", "reading": "~からきました"}, {"expression": "どうぞよろしく", "meaning": "Pleased to meet you", "reading": "どうぞよろしく"}, {"expression": "失礼ですが", "meaning": "Excuse me, but...", "reading": "しつれいですが"}, {"expression": "お名前は？", "meaning": "May I have your name?", "reading": "おなまえは？"}, {"expression": "アメリカ", "meaning": "U.S.A.", "reading": "アメリカ"}, {"expression": "イギリス", "meaning": "U.K.", "reading": "イギリス"}, {"expression": "インド", "meaning": "India", "reading": "インド"}, {"expression": "韓国", "meaning": "South Korea", "reading": "かんこく"}, {"expression": "中国", "meaning": "China", "reading": "ちゅうごく"}, {"expression": "ドイツ", "meaning": "Germany", "reading": "ドイツ"}, {"expression": "日本", "meaning": "Japan", "reading": "にほん"}, {"expression": "ブラジル", "meaning": "Brazil", "reading": "ブラジル"}, {"expression": "ええ", "meaning": "Yes (casual)", "reading": "ええ"}], "Lesson 02": [{"expression": "これ", "meaning": "This (thing here)", "reading": "これ"}, {"expression": "それ", "meaning": "That (thing near listener)", "reading": "それ"}, {"expression": "あれ", "meaning": "That (thing over there)", "reading": "あれ"}, {"expression": "この～", "meaning": "This ~ (here)", "reading": "この~"}, {"expression": "その～", "meaning": "That ~ (near listener)", "reading": "その~"}, {"expression": "あの～", "meaning": "That ~ (over there)", "reading": "あの~"}, {"expression": "本", "meaning": "Book", "reading": "ほん"}, {"expression": "辞書", "meaning": "Dictionary", "reading": "じしょ"}, {"expression": "雑誌", "meaning": "Magazine", "reading": "ざっし"}, {"expression": "新聞", "meaning": "Newspaper", "reading": "しんぶん"}, {"expression": "ノート", "meaning": "Notebook", "reading": "ノート"}, {"expression": "手帳", "meaning": "Personal organiser", "reading": "てちょう"}, {"expression": "カード", "meaning": "Card", "reading": "カード"}, {"expression": "鉛筆", "meaning": "Pencil", "reading": "えんぴつ"}, {"expression": "ボールペン", "meaning": "Ballpoint pen", "reading": "ボールペン"}, {"expression": "かぎ", "meaning": "Key", "reading": "かぎ"}, {"expression": "時計", "meaning": "Watch, clock", "reading": "とけい"}, {"expression": "傘", "meaning": "Umbrella", "reading": "かさ"}, {"expression": "かばん", "meaning": "Bag, briefcase", "reading": "かばん"}, {"expression": "テレビ", "meaning": "Television", "reading": "テレビ"}, {"expression": "ラジオ", "meaning": "Radio", "reading": "ラジオ"}, {"expression": "カメラ", "meaning": "Camera", "reading": "カメラ"}, {"expression": "コンピューター", "meaning": "Computer", "reading": "コンピューター"}, {"expression": "車", "meaning": "Car, vehicle", "reading": "くるま"}, {"expression": "机", "meaning": "Desk", "reading": "つくえ"}, {"expression": "いす", "meaning": "Chair", "reading": "いす"}, {"expression": "チョコレート", "meaning": "Chocolate", "reading": "チョコレート"}, {"expression": "コーヒー", "meaning": "Coffee", "reading": "コーヒー"}, {"expression": "英語", "meaning": "English language", "reading": "えいご"}, {"expression": "日本語", "meaning": "Japanese language", "reading": "にほんご"}, {"expression": "何", "meaning": "What", "reading": "なん"}, {"expression": "そう", "meaning": "So, that's right", "reading": "そう"}, {"expression": "どうぞ", "meaning": "Here you are / please", "reading": "どうぞ"}, {"expression": "ありがとうございます", "meaning": "Thank you very much", "reading": "ありがとうございます"}, {"expression": "そうですか", "meaning": "I see", "reading": "そうですか"}, {"expression": "違います", "meaning": "No, it isn't / you're wrong", "reading": "ちがいます"}, {"expression": "部屋", "meaning": "Room", "reading": "へや"}], "Lesson 03": [{"expression": "ここ", "meaning": "Here, this place", "reading": "ここ"}, {"expression": "そこ", "meaning": "There (near listener)", "reading": "そこ"}, {"expression": "あそこ", "meaning": "Over there", "reading": "あそこ"}, {"expression": "どこ", "meaning": "Where", "reading": "どこ"}, {"expression": "こちら", "meaning": "This way / here (polite)", "reading": "こちら"}, {"expression": "そちら", "meaning": "That way (polite)", "reading": "そちら"}, {"expression": "あちら", "meaning": "That way over there (polite)", "reading": "あちら"}, {"expression": "どちら", "meaning": "Which way / where (polite)", "reading": "どちら"}, {"expression": "教室", "meaning": "Classroom", "reading": "きょうしつ"}, {"expression": "食堂", "meaning": "Dining hall, canteen", "reading": "しょくどう"}, {"expression": "事務所", "meaning": "Office", "reading": "じむしょ"}, {"expression": "会議室", "meaning": "Conference room", "reading": "かいぎしつ"}, {"expression": "受付", "meaning": "Reception desk", "reading": "うけつけ"}, {"expression": "ロビー", "meaning": "Lobby", "reading": "ロビー"}, {"expression": "トイレ", "meaning": "Toilet, restroom", "reading": "トイレ"}, {"expression": "エレベーター", "meaning": "Elevator", "reading": "エレベーター"}, {"expression": "エスカレーター", "meaning": "Escalator", "reading": "エスカレーター"}, {"expression": "自動販売機", "meaning": "Vending machine", "reading": "じどうはんばいき"}, {"expression": "電話", "meaning": "Telephone", "reading": "でんわ"}, {"expression": "会社", "meaning": "Company", "reading": "かいしゃ"}, {"expression": "うち", "meaning": "House, home", "reading": "うち"}, {"expression": "靴", "meaning": "Shoes", "reading": "くつ"}, {"expression": "ネクタイ", "meaning": "Necktie", "reading": "ネクタイ"}, {"expression": "ワイン", "meaning": "Wine", "reading": "ワイン"}, {"expression": "いくら", "meaning": "How much", "reading": "いくら"}, {"expression": "百", "meaning": "Hundred", "reading": "ひゃく"}, {"expression": "千", "meaning": "Thousand", "reading": "せん"}, {"expression": "万", "meaning": "Ten thousand", "reading": "まん"}, {"expression": "すみません", "meaning": "Excuse me", "reading": "すみません"}, {"expression": "どうも", "meaning": "Thanks", "reading": "どうも"}, {"expression": "じゃ", "meaning": "Well, then", "reading": "じゃ"}, {"expression": "ください", "meaning": "Please give me ~", "reading": "ください"}, {"expression": "イタリア", "meaning": "Italy", "reading": "イタリア"}, {"expression": "フランス", "meaning": "France", "reading": "フランス"}, {"expression": "ベルリン", "meaning": "Berlin", "reading": "ベルリン"}], "Lesson 04": [{"expression": "起きます", "meaning": "Get up, wake up", "reading": "おきます"}, {"expression": "寝ます", "meaning": "Sleep, go to bed", "reading": "ねます"}, {"expression": "働きます", "meaning": "Work", "reading": "はたらきます"}, {"expression": "休みます", "meaning": "Rest, take a holiday", "reading": "やすみます"}, {"expression": "勉強します", "meaning": "Study", "reading": "べんきょうします"}, {"expression": "終わります", "meaning": "Finish", "reading": "おわります"}, {"expression": "デパート", "meaning": "Department store", "reading": "デパート"}, {"expression": "銀行", "meaning": "Bank", "reading": "ぎんこう"}, {"expression": "郵便局", "meaning": "Post office", "reading": "ゆうびんきょく"}, {"expression": "図書館", "meaning": "Library", "reading": "としょかん"}, {"expression": "美術館", "meaning": "Art museum", "reading": "びじゅつかん"}, {"expression": "今", "meaning": "Now", "reading": "いま"}, {"expression": "半", "meaning": "Half", "reading": "はん"}, {"expression": "午前", "meaning": "A.m., morning", "reading": "ごぜん"}, {"expression": "午後", "meaning": "P.m., afternoon", "reading": "ごご"}, {"expression": "朝", "meaning": "Morning", "reading": "あさ"}, {"expression": "昼", "meaning": "Daytime, noon", "reading": "ひる"}, {"expression": "おととい", "meaning": "Day before yesterday", "reading": "おととい"}, {"expression": "きのう", "meaning": "Yesterday", "reading": "きのう"}, {"expression": "きょう", "meaning": "Today", "reading": "きょう"}, {"expression": "あした", "meaning": "Tomorrow", "reading": "あした"}, {"expression": "あさって", "meaning": "Day after tomorrow", "reading": "あさって"}, {"expression": "けさ", "meaning": "This morning", "reading": "けさ"}, {"expression": "今晩", "meaning": "This evening, tonight", "reading": "こんばん"}, {"expression": "やすみ", "meaning": "Rest, holiday, day off", "reading": "やすみ"}, {"expression": "試験", "meaning": "Examination, test", "reading": "しけん"}, {"expression": "会議", "meaning": "Meeting, conference", "reading": "かいぎ"}, {"expression": "映画", "meaning": "Film, movie", "reading": "えいが"}, {"expression": "毎朝", "meaning": "Every morning", "reading": "まいあさ"}, {"expression": "毎晩", "meaning": "Every night", "reading": "まいばん"}, {"expression": "毎日", "meaning": "Every day", "reading": "まいにち"}, {"expression": "月曜日", "meaning": "Monday", "reading": "げつようび"}, {"expression": "火曜日", "meaning": "Tuesday", "reading": "かようび"}, {"expression": "水曜日", "meaning": "Wednesday", "reading": "すいようび"}, {"expression": "木曜日", "meaning": "Thursday", "reading": "もくようび"}, {"expression": "金曜日", "meaning": "Friday", "reading": "きんようび"}, {"expression": "土曜日", "meaning": "Saturday", "reading": "どようび"}, {"expression": "日曜日", "meaning": "Sunday", "reading": "にちようび"}], "Lesson 05": [{"expression": "行きます", "meaning": "Go", "reading": "いきます"}, {"expression": "来ます", "meaning": "Come", "reading": "きます"}, {"expression": "帰ります", "meaning": "Go home, return", "reading": "かえります"}, {"expression": "学校", "meaning": "School", "reading": "がっこう"}, {"expression": "スーパー", "meaning": "Supermarket", "reading": "スーパー"}, {"expression": "駅", "meaning": "Station", "reading": "えき"}, {"expression": "飛行機", "meaning": "Airplane", "reading": "ひこうき"}, {"expression": "船", "meaning": "Ship", "reading": "ふね"}, {"expression": "電車", "meaning": "Electric train", "reading": "でんしゃ"}, {"expression": "地下鉄", "meaning": "Underground, subway", "reading": "ちかてつ"}, {"expression": "新幹線", "meaning": "Shinkansen, bullet train", "reading": "しんかんせん"}, {"expression": "バス", "meaning": "Bus", "reading": "バス"}, {"expression": "タクシー", "meaning": "Taxi", "reading": "タクシー"}, {"expression": "自転車", "meaning": "Bicycle", "reading": "じてんしゃ"}, {"expression": "歩いて", "meaning": "On foot", "reading": "あるいて"}, {"expression": "人", "meaning": "Person, people", "reading": "ひと"}, {"expression": "友達", "meaning": "Friend", "reading": "ともだち"}, {"expression": "彼", "meaning": "He, boyfriend", "reading": "かれ"}, {"expression": "彼女", "meaning": "She, girlfriend", "reading": "かのじょ"}, {"expression": "家族", "meaning": "Family", "reading": "かぞく"}, {"expression": "一人で", "meaning": "Alone, by oneself", "reading": "ひとりで"}, {"expression": "先週", "meaning": "Last week", "reading": "せんしゅう"}, {"expression": "今週", "meaning": "This week", "reading": "こんしゅう"}, {"expression": "来週", "meaning": "Next week", "reading": "らいしゅう"}, {"expression": "先月", "meaning": "Last month", "reading": "せんげつ"}, {"expression": "今月", "meaning": "This month", "reading": "こんげつ"}, {"expression": "来月", "meaning": "Next month", "reading": "らいげつ"}, {"expression": "去年", "meaning": "Last year", "reading": "きょねん"}, {"expression": "ことし", "meaning": "This year", "reading": "ことし"}, {"expression": "来年", "meaning": "Next year", "reading": "らいねん"}, {"expression": "いつ", "meaning": "When", "reading": "いつ"}, {"expression": "誕生日", "meaning": "Birthday", "reading": "たんじょうび"}, {"expression": "大阪城", "meaning": "Osaka Castle", "reading": "おおさかじょう"}], "Lesson 06": [{"expression": "食べます", "meaning": "Eat", "reading": "たべます"}, {"expression": "飲みます", "meaning": "Drink", "reading": "のみます"}, {"expression": "見ます", "meaning": "See, look at, watch", "reading": "みます"}, {"expression": "聞きます", "meaning": "Hear, listen", "reading": "ききます"}, {"expression": "読みます", "meaning": "Read", "reading": "よみます"}, {"expression": "書きます", "meaning": "Write", "reading": "かきます"}, {"expression": "買います", "meaning": "Buy", "reading": "かいます"}, {"expression": "します", "meaning": "Do, play", "reading": "します"}, {"expression": "会います", "meaning": "Meet", "reading": "あいます"}, {"expression": "ごはん", "meaning": "Meal, cooked rice", "reading": "ごはん"}, {"expression": "朝ごはん", "meaning": "Breakfast", "reading": "あさごはん"}, {"expression": "昼ごはん", "meaning": "Lunch", "reading": "ひるごはん"}, {"expression": "晩ごはん", "meaning": "Dinner, supper", "reading": "ばんごはん"}, {"expression": "パン", "meaning": "Bread", "reading": "パン"}, {"expression": "卵", "meaning": "Egg", "reading": "たまご"}, {"expression": "肉", "meaning": "Meat", "reading": "にく"}, {"expression": "魚", "meaning": "Fish", "reading": "さかな"}, {"expression": "野菜", "meaning": "Vegetable", "reading": "やさい"}, {"expression": "果物", "meaning": "Fruit", "reading": "くだもの"}, {"expression": "水", "meaning": "Water", "reading": "みず"}, {"expression": "お茶", "meaning": "Tea, green tea", "reading": "おちゃ"}, {"expression": "紅茶", "meaning": "Black tea", "reading": "こうちゃ"}, {"expression": "牛乳", "meaning": "Milk", "reading": "ぎゅうにゅう"}, {"expression": "ジュース", "meaning": "Juice", "reading": "ジュース"}, {"expression": "ビール", "meaning": "Beer", "reading": "ビール"}, {"expression": "お酒", "meaning": "Alcohol, rice wine", "reading": "おさけ"}, {"expression": "手紙", "meaning": "Letter", "reading": "てがみ"}, {"expression": "写真", "meaning": "Photograph", "reading": "しゃしん"}, {"expression": "店", "meaning": "Shop, store", "reading": "みせ"}, {"expression": "宿題", "meaning": "Homework", "reading": "しゅくだい"}, {"expression": "テニス", "meaning": "Tennis", "reading": "テニス"}, {"expression": "サッカー", "meaning": "Soccer", "reading": "サッカー"}, {"expression": "いっしょに", "meaning": "Together", "reading": "いっしょに"}, {"expression": "いつも", "meaning": "Always, usually", "reading": "いつも"}, {"expression": "時々", "meaning": "Sometimes", "reading": "ときどき"}, {"expression": "わかりました", "meaning": "I understood / I see", "reading": "わかりました"}], "Lesson 07": [{"expression": "切ります", "meaning": "Cut, slice", "reading": "きります"}, {"expression": "送ります", "meaning": "Send", "reading": "おくります"}, {"expression": "あげます", "meaning": "Give", "reading": "あげます"}, {"expression": "もらいます", "meaning": "Receive", "reading": "もらいます"}, {"expression": "貸します", "meaning": "Lend", "reading": "かします"}, {"expression": "借ります", "meaning": "Borrow", "reading": "かります"}, {"expression": "教えます", "meaning": "Teach", "reading": "おしえます"}, {"expression": "習います", "meaning": "Learn", "reading": "ならいます"}, {"expression": "手", "meaning": "Hand, arm", "reading": "て"}, {"expression": "はし", "meaning": "Chopsticks", "reading": "はし"}, {"expression": "スプーン", "meaning": "Spoon", "reading": "スプーン"}, {"expression": "ナイフ", "meaning": "Knife", "reading": "ナイフ"}, {"expression": "フォーク", "meaning": "Fork", "reading": "フォーク"}, {"expression": "パソコン", "meaning": "Personal computer", "reading": "パソコン"}, {"expression": "ケータイ", "meaning": "Mobile phone", "reading": "ケータイ"}, {"expression": "メール", "meaning": "E-mail", "reading": "メール"}, {"expression": "年賀状", "meaning": "New Year's card", "reading": "ねんがじょう"}, {"expression": "消しゴム", "meaning": "Eraser", "reading": "けしごむ"}, {"expression": "紙", "meaning": "Paper", "reading": "かみ"}, {"expression": "花", "meaning": "Flower", "reading": "はな"}, {"expression": "シャツ", "meaning": "Shirt", "reading": "シャツ"}, {"expression": "プレゼント", "meaning": "Present, gift", "reading": "プレゼント"}, {"expression": "荷物", "meaning": "Luggage, parcel", "reading": "にもつ"}, {"expression": "お金", "meaning": "Money", "reading": "おかね"}, {"expression": "きっぷ", "meaning": "Ticket", "reading": "きっぷ"}, {"expression": "父", "meaning": "(My) father", "reading": "ちち"}, {"expression": "母", "meaning": "(My) mother", "reading": "はは"}, {"expression": "お父さん", "meaning": "(Someone's) father", "reading": "おとうさん"}, {"expression": "お母さん", "meaning": "(Someone's) mother", "reading": "おかあさん"}, {"expression": "もう", "meaning": "Already", "reading": "もう"}, {"expression": "まだ", "meaning": "Not yet", "reading": "まだ"}, {"expression": "いただきます", "meaning": "Said before eating", "reading": "いただきます"}, {"expression": "ごちそうさまでした", "meaning": "Said after eating", "reading": "ごちそうさまでした"}], "Lesson 08": [{"expression": "きれい", "meaning": "Beautiful, clean", "reading": "きれい"}, {"expression": "静か", "meaning": "Quiet", "reading": "しずか"}, {"expression": "にぎやか", "meaning": "Lively", "reading": "にぎやか"}, {"expression": "有名", "meaning": "Famous", "reading": "ゆうめい"}, {"expression": "親切", "meaning": "Kind, considerate", "reading": "しんせつ"}, {"expression": "元気", "meaning": "Healthy, energetic", "reading": "げんき"}, {"expression": "暇", "meaning": "Free time", "reading": "ひま"}, {"expression": "便利", "meaning": "Convenient", "reading": "べんり"}, {"expression": "大きい", "meaning": "Big, large", "reading": "おおきい"}, {"expression": "小さい", "meaning": "Small, little", "reading": "ちいさい"}, {"expression": "新しい", "meaning": "New, fresh", "reading": "あたらしい"}, {"expression": "古い", "meaning": "Old (things)", "reading": "ふるい"}, {"expression": "いい", "meaning": "Good", "reading": "いい"}, {"expression": "悪い", "meaning": "Bad", "reading": "わるい"}, {"expression": "暑い", "meaning": "Hot", "reading": "あつい"}, {"expression": "寒い", "meaning": "Cold (temperature)", "reading": "さむい"}, {"expression": "冷たい", "meaning": "Cold (to touch)", "reading": "つめたい"}, {"expression": "難しい", "meaning": "Difficult", "reading": "むずかしい"}, {"expression": "易しい", "meaning": "Easy, gentle", "reading": "やさしい"}, {"expression": "高い", "meaning": "Expensive, tall", "reading": "たかい"}, {"expression": "安い", "meaning": "Cheap, inexpensive", "reading": "やすい"}, {"expression": "低い", "meaning": "Low", "reading": "ひくい"}, {"expression": "おもしろい", "meaning": "Interesting", "reading": "おもしろい"}, {"expression": "おいしい", "meaning": "Delicious", "reading": "おいしい"}, {"expression": "忙しい", "meaning": "Busy", "reading": "いそがしい"}, {"expression": "楽しい", "meaning": "Enjoyable", "reading": "たのしい"}, {"expression": "白い", "meaning": "White", "reading": "しろい"}, {"expression": "黒い", "meaning": "Black", "reading": "くろい"}, {"expression": "赤い", "meaning": "Red", "reading": "あかい"}, {"expression": "青い", "meaning": "Blue", "reading": "あおい"}, {"expression": "桜", "meaning": "Cherry blossom", "reading": "さくら"}, {"expression": "山", "meaning": "Mountain", "reading": "やま"}, {"expression": "町", "meaning": "Town, city", "reading": "まち"}, {"expression": "食べ物", "meaning": "Food", "reading": "たべもの"}, {"expression": "とても", "meaning": "Very", "reading": "とても"}, {"expression": "あまり", "meaning": "Not so (with negatives)", "reading": "あまり"}, {"expression": "富士山", "meaning": "Mt. Fuji", "reading": "ふじさん"}], "Lesson 09": [{"expression": "わかります", "meaning": "Understand", "reading": "わかります"}, {"expression": "好き", "meaning": "Like", "reading": "すき"}, {"expression": "嫌い", "meaning": "Dislike", "reading": "きらい"}, {"expression": "上手", "meaning": "Good at", "reading": "じょうず"}, {"expression": "下手", "meaning": "Poor at", "reading": "へた"}, {"expression": "飲み物", "meaning": "Drinks", "reading": "のみもの"}, {"expression": "料理", "meaning": "Cooking, dish", "reading": "りょうり"}, {"expression": "スポーツ", "meaning": "Sport", "reading": "スポーツ"}, {"expression": "野球", "meaning": "Baseball", "reading": "やきゅう"}, {"expression": "ダンス", "meaning": "Dance", "reading": "ダンス"}, {"expression": "旅行", "meaning": "Trip, tour", "reading": "りょこう"}, {"expression": "音楽", "meaning": "Music", "reading": "おんがく"}, {"expression": "歌", "meaning": "Song", "reading": "うた"}, {"expression": "クラシック", "meaning": "Classical music", "reading": "クラシック"}, {"expression": "ジャズ", "meaning": "Jazz", "reading": "ジャズ"}, {"expression": "コンサート", "meaning": "Concert", "reading": "コンサート"}, {"expression": "カラオケ", "meaning": "Karaoke", "reading": "カラオケ"}, {"expression": "歌舞伎", "meaning": "Kabuki", "reading": "かぶき"}, {"expression": "漢字", "meaning": "Chinese character", "reading": "かんじ"}, {"expression": "ひらがな", "meaning": "Hiragana script", "reading": "ひらがな"}, {"expression": "かたかな", "meaning": "Katakana script", "reading": "かたかな"}, {"expression": "時間", "meaning": "Time", "reading": "じかん"}, {"expression": "約束", "meaning": "Appointment, promise", "reading": "やくそく"}, {"expression": "アルバイト", "meaning": "Part-time job", "reading": "アルバイト"}, {"expression": "子ども", "meaning": "Child", "reading": "こども"}, {"expression": "たくさん", "meaning": "Many, much", "reading": "たくさん"}, {"expression": "少し", "meaning": "A little, a few", "reading": "すこし"}, {"expression": "ぜんぜん", "meaning": "Not at all (with negatives)", "reading": "ぜんぜん"}, {"expression": "どうして", "meaning": "Why", "reading": "どうして"}, {"expression": "チケット", "meaning": "Ticket", "reading": "チケット"}], "Lesson 10": [{"expression": "あります", "meaning": "Exist, be (inanimate)", "reading": "あります"}, {"expression": "います", "meaning": "Exist, be (animate)", "reading": "います"}, {"expression": "男の人", "meaning": "Man", "reading": "おとこのひと"}, {"expression": "女の人", "meaning": "Woman", "reading": "おんなのひと"}, {"expression": "男の子", "meaning": "Boy", "reading": "おとこのこ"}, {"expression": "女の子", "meaning": "Girl", "reading": "おんなのこ"}, {"expression": "犬", "meaning": "Dog", "reading": "いぬ"}, {"expression": "猫", "meaning": "Cat", "reading": "ねこ"}, {"expression": "木", "meaning": "Tree, wood", "reading": "き"}, {"expression": "電池", "meaning": "Battery", "reading": "でんち"}, {"expression": "箱", "meaning": "Box", "reading": "はこ"}, {"expression": "冷蔵庫", "meaning": "Refrigerator", "reading": "れいぞうこ"}, {"expression": "テーブル", "meaning": "Table", "reading": "テーブル"}, {"expression": "ベッド", "meaning": "Bed", "reading": "ベッド"}, {"expression": "棚", "meaning": "Shelf", "reading": "たな"}, {"expression": "ドア", "meaning": "Door", "reading": "ドア"}, {"expression": "窓", "meaning": "Window", "reading": "まど"}, {"expression": "コンビニ", "meaning": "Convenience store", "reading": "コンビニ"}, {"expression": "公園", "meaning": "Park", "reading": "こうえん"}, {"expression": "喫茶店", "meaning": "Café, coffee shop", "reading": "きっさてん"}, {"expression": "上", "meaning": "On, above", "reading": "うえ"}, {"expression": "下", "meaning": "Under, below", "reading": "した"}, {"expression": "前", "meaning": "Front, before", "reading": "まえ"}, {"expression": "うしろ", "meaning": "Back, behind", "reading": "うしろ"}, {"expression": "右", "meaning": "Right side", "reading": "みぎ"}, {"expression": "左", "meaning": "Left side", "reading": "ひだり"}, {"expression": "中", "meaning": "Inside", "reading": "なか"}, {"expression": "外", "meaning": "Outside", "reading": "そと"}, {"expression": "隣", "meaning": "Next door", "reading": "となり"}, {"expression": "近く", "meaning": "Near, vicinity", "reading": "ちかく"}, {"expression": "間", "meaning": "Between, among", "reading": "あいだ"}], "Lesson 11": [{"expression": "かかります", "meaning": "Take (time/money)", "reading": "かかります"}, {"expression": "一つ", "meaning": "One thing", "reading": "ひとつ"}, {"expression": "二つ", "meaning": "Two things", "reading": "ふたつ"}, {"expression": "三つ", "meaning": "Three things", "reading": "みっつ"}, {"expression": "四つ", "meaning": "Four things", "reading": "よっつ"}, {"expression": "五つ", "meaning": "Five things", "reading": "いつつ"}, {"expression": "六つ", "meaning": "Six things", "reading": "むっつ"}, {"expression": "七つ", "meaning": "Seven things", "reading": "ななつ"}, {"expression": "八つ", "meaning": "Eight things", "reading": "やっつ"}, {"expression": "九つ", "meaning": "Nine things", "reading": "ここのつ"}, {"expression": "とお", "meaning": "Ten things", "reading": "とお"}, {"expression": "いくつ", "meaning": "How many things", "reading": "いくつ"}, {"expression": "一人", "meaning": "One person", "reading": "ひとり"}, {"expression": "二人", "meaning": "Two people", "reading": "ふたり"}, {"expression": "りんご", "meaning": "Apple", "reading": "りんご"}, {"expression": "みかん", "meaning": "Mandarin orange", "reading": "みかん"}, {"expression": "サンドイッチ", "meaning": "Sandwich", "reading": "サンドイッチ"}, {"expression": "アイスクリーム", "meaning": "Ice cream", "reading": "アイスクリーム"}, {"expression": "切手", "meaning": "Postage stamp", "reading": "きって"}, {"expression": "はがき", "meaning": "Postcard", "reading": "はがき"}, {"expression": "封筒", "meaning": "Envelope", "reading": "ふうとう"}, {"expression": "両親", "meaning": "Parents", "reading": "りょうしん"}, {"expression": "兄弟", "meaning": "Siblings", "reading": "きょうだい"}, {"expression": "兄", "meaning": "(My) elder brother", "reading": "あに"}, {"expression": "お兄さん", "meaning": "(Someone's) elder brother", "reading": "おにいさん"}, {"expression": "姉", "meaning": "(My) elder sister", "reading": "あね"}, {"expression": "お姉さん", "meaning": "(Someone's) elder sister", "reading": "おねえさん"}, {"expression": "弟", "meaning": "(My) younger brother", "reading": "おとうと"}, {"expression": "妹", "meaning": "(My) younger sister", "reading": "いもうと"}, {"expression": "どのくらい", "meaning": "How long / how much", "reading": "どのくらい"}, {"expression": "みんな", "meaning": "Everyone, everything", "reading": "みんな"}], "Lesson 12": [{"expression": "簡単", "meaning": "Easy, simple", "reading": "かんたん"}, {"expression": "近い", "meaning": "Near", "reading": "ちかい"}, {"expression": "遠い", "meaning": "Far", "reading": "とおい"}, {"expression": "早い", "meaning": "Fast, early", "reading": "はやい"}, {"expression": "遅い", "meaning": "Slow, late", "reading": "おそい"}, {"expression": "多い", "meaning": "Many, much", "reading": "おおい"}, {"expression": "少ない", "meaning": "Few, a little", "reading": "すくない"}, {"expression": "暖かい", "meaning": "Warm", "reading": "あたたかい"}, {"expression": "涼しい", "meaning": "Cool", "reading": "すずしい"}, {"expression": "甘い", "meaning": "Sweet", "reading": "あまい"}, {"expression": "辛い", "meaning": "Spicy, hot (taste)", "reading": "からい"}, {"expression": "重い", "meaning": "Heavy", "reading": "おもい"}, {"expression": "軽い", "meaning": "Light", "reading": "かるい"}, {"expression": "季節", "meaning": "Season", "reading": "きせつ"}, {"expression": "春", "meaning": "Spring", "reading": "はる"}, {"expression": "夏", "meaning": "Summer", "reading": "なつ"}, {"expression": "秋", "meaning": "Autumn, fall", "reading": "あき"}, {"expression": "冬", "meaning": "Winter", "reading": "ふゆ"}, {"expression": "天気", "meaning": "Weather", "reading": "てんき"}, {"expression": "雨", "meaning": "Rain", "reading": "あめ"}, {"expression": "雪", "meaning": "Snow", "reading": "ゆき"}, {"expression": "曇り", "meaning": "Cloudy", "reading": "くもり"}, {"expression": "海", "meaning": "Sea, ocean", "reading": "うみ"}, {"expression": "世界", "meaning": "World", "reading": "せかい"}, {"expression": "すき焼き", "meaning": "Sukiyaki", "reading": "すきやき"}, {"expression": "刺身", "meaning": "Sashimi", "reading": "さしみ"}, {"expression": "てんぷら", "meaning": "Tempura", "reading": "てんぷら"}, {"expression": "豚肉", "meaning": "Pork", "reading": "ぶたにく"}, {"expression": "鶏肉", "meaning": "Chicken", "reading": "けいにく"}, {"expression": "牛肉", "meaning": "Beef", "reading": "ぎゅうにく"}, {"expression": "いちばん", "meaning": "The most, number one", "reading": "いちばん"}, {"expression": "初めて", "meaning": "For the first time", "reading": "はじめて"}], "Lesson 13": [{"expression": "遊びます", "meaning": "Enjoy oneself, play", "reading": "あそびます"}, {"expression": "泳ぎます", "meaning": "Swim", "reading": "およぎます"}, {"expression": "結婚します", "meaning": "Get married", "reading": "けっこんします"}, {"expression": "買い物します", "meaning": "Go shopping", "reading": "かいものします"}, {"expression": "食事します", "meaning": "Have a meal, dine", "reading": "しょくじします"}, {"expression": "散歩します", "meaning": "Take a walk", "reading": "さんぽします"}, {"expression": "大変", "meaning": "Hard, tough, awful", "reading": "たいへん"}, {"expression": "欲しい", "meaning": "Want (something)", "reading": "ほしい"}, {"expression": "広い", "meaning": "Wide, spacious", "reading": "ひろい"}, {"expression": "狭い", "meaning": "Narrow, small", "reading": "せまい"}, {"expression": "プール", "meaning": "Swimming pool", "reading": "プール"}, {"expression": "川", "meaning": "River", "reading": "かわ"}, {"expression": "釣り", "meaning": "Fishing", "reading": "つり"}, {"expression": "スキー", "meaning": "Skiing", "reading": "スキー"}, {"expression": "週末", "meaning": "Weekend", "reading": "しゅうまつ"}, {"expression": "何か", "meaning": "Something", "reading": "なにか"}, {"expression": "どこか", "meaning": "Somewhere", "reading": "どこか"}, {"expression": "定食", "meaning": "Set meal", "reading": "ていしょく"}], "Lesson 14": [{"expression": "つけます", "meaning": "Turn on", "reading": "つけます"}, {"expression": "消します", "meaning": "Turn off, erase", "reading": "けします"}, {"expression": "開けます", "meaning": "Open", "reading": "あけます"}, {"expression": "閉めます", "meaning": "Close, shut", "reading": "しめます"}, {"expression": "急ぎます", "meaning": "Hurry", "reading": "いそぎます"}, {"expression": "待ちます", "meaning": "Wait", "reading": "まちます"}, {"expression": "持ちます", "meaning": "Hold", "reading": "もちます"}, {"expression": "取ります", "meaning": "Take, pass", "reading": "とります"}, {"expression": "手伝います", "meaning": "Help (with a task)", "reading": "てつだいます"}, {"expression": "呼びます", "meaning": "Call", "reading": "よびます"}, {"expression": "話します", "meaning": "Speak, talk", "reading": "はなします"}, {"expression": "使います", "meaning": "Use", "reading": "つかいます"}, {"expression": "見せます", "meaning": "Show", "reading": "みせます"}, {"expression": "座ります", "meaning": "Sit down", "reading": "すわります"}, {"expression": "立ちます", "meaning": "Stand up", "reading": "たちます"}, {"expression": "電気", "meaning": "Electricity, light", "reading": "でんき"}, {"expression": "エアコン", "meaning": "Air conditioner", "reading": "エアコン"}, {"expression": "パスポート", "meaning": "Passport", "reading": "パスポート"}, {"expression": "名前", "meaning": "Name", "reading": "なまえ"}, {"expression": "住所", "meaning": "Address", "reading": "じゅうしょ"}, {"expression": "地図", "meaning": "Map", "reading": "ちず"}, {"expression": "塩", "meaning": "Salt", "reading": "しお"}, {"expression": "砂糖", "meaning": "Sugar", "reading": "さとう"}, {"expression": "問題", "meaning": "Problem, question", "reading": "もんだい"}, {"expression": "答え", "meaning": "Answer", "reading": "こたえ"}, {"expression": "まっすぐ", "meaning": "Straight", "reading": "まっすぐ"}, {"expression": "ゆっくり", "meaning": "Slowly, leisurely", "reading": "ゆっくり"}, {"expression": "すぐ", "meaning": "Immediately", "reading": "すぐ"}, {"expression": "あとで", "meaning": "Later", "reading": "あとで"}], "Lesson 15": [{"expression": "置きます", "meaning": "Put", "reading": "おきます"}, {"expression": "作ります", "meaning": "Make, produce", "reading": "つくります"}, {"expression": "売ります", "meaning": "Sell", "reading": "うります"}, {"expression": "知ります", "meaning": "Get to know", "reading": "しります"}, {"expression": "研究します", "meaning": "Do research", "reading": "けんきゅうします"}, {"expression": "服", "meaning": "Clothes", "reading": "ふく"}, {"expression": "製品", "meaning": "Products", "reading": "せいひん"}, {"expression": "電子辞書", "meaning": "Electronic dictionary", "reading": "でんしじしょ"}, {"expression": "経済", "meaning": "Economy", "reading": "けいざい"}, {"expression": "市役所", "meaning": "City hall", "reading": "しやくしょ"}, {"expression": "高校", "meaning": "Senior high school", "reading": "こうこう"}, {"expression": "歯医者", "meaning": "Dentist", "reading": "はいしゃ"}, {"expression": "独身", "meaning": "Single, unmarried", "reading": "どくしん"}, {"expression": "みなさん", "meaning": "Everyone, ladies and gentlemen", "reading": "みなさん"}], "Lesson 16": [{"expression": "乗ります", "meaning": "Ride, get on (train etc.)", "reading": "のります"}, {"expression": "降ります", "meaning": "Get off (train etc.)", "reading": "おります"}, {"expression": "乗り換えます", "meaning": "Transfer, change trains", "reading": "のりかえます"}, {"expression": "入れます", "meaning": "Put in, insert", "reading": "いれます"}, {"expression": "出します", "meaning": "Take out, hand in", "reading": "だします"}, {"expression": "押します", "meaning": "Push, press", "reading": "おします"}, {"expression": "始めます", "meaning": "Start, begin", "reading": "はじめます"}, {"expression": "若い", "meaning": "Young", "reading": "わかい"}, {"expression": "長い", "meaning": "Long", "reading": "ながい"}, {"expression": "短い", "meaning": "Short", "reading": "みじかい"}, {"expression": "明るい", "meaning": "Bright, light", "reading": "あかるい"}, {"expression": "暗い", "meaning": "Dark", "reading": "くらい"}, {"expression": "体", "meaning": "Body, health", "reading": "からだ"}, {"expression": "頭", "meaning": "Head, brain", "reading": "あたま"}, {"expression": "髪", "meaning": "Hair", "reading": "かみ"}, {"expression": "顔", "meaning": "Face", "reading": "かお"}, {"expression": "目", "meaning": "Eye", "reading": "め"}, {"expression": "耳", "meaning": "Ear", "reading": "みみ"}, {"expression": "鼻", "meaning": "Nose", "reading": "はな"}, {"expression": "口", "meaning": "Mouth", "reading": "くち"}, {"expression": "歯", "meaning": "Tooth", "reading": "は"}, {"expression": "おなか", "meaning": "Stomach", "reading": "おなか"}, {"expression": "足", "meaning": "Leg, foot", "reading": "あし"}, {"expression": "シャワー", "meaning": "Shower", "reading": "シャワー"}, {"expression": "緑", "meaning": "Green, greenery", "reading": "みどり"}, {"expression": "神社", "meaning": "Shinto shrine", "reading": "じんじゃ"}, {"expression": "どうやって", "meaning": "In what way, how", "reading": "どうやって"}, {"expression": "まず", "meaning": "First of all", "reading": "まず"}, {"expression": "つぎに", "meaning": "Next", "reading": "つぎに"}], "Lesson 17": [{"expression": "覚えます", "meaning": "Memorize", "reading": "おぼえます"}, {"expression": "忘れます", "meaning": "Forget", "reading": "わすれます"}, {"expression": "払います", "meaning": "Pay", "reading": "はらいます"}, {"expression": "返します", "meaning": "Give back, return", "reading": "かえします"}, {"expression": "出かけます", "meaning": "Go out", "reading": "でかけます"}, {"expression": "脱ぎます", "meaning": "Take off (clothes)", "reading": "ぬぎます"}, {"expression": "持って行きます", "meaning": "Take (something)", "reading": "もっていきます"}, {"expression": "持って来ます", "meaning": "Bring (something)", "reading": "もってきます"}, {"expression": "心配します", "meaning": "Worry", "reading": "しんぱいします"}, {"expression": "大切", "meaning": "Important, precious", "reading": "たいせつ"}, {"expression": "大丈夫", "meaning": "All right, okay", "reading": "だいじょうぶ"}, {"expression": "危ない", "meaning": "Dangerous", "reading": "あぶない"}, {"expression": "禁煙", "meaning": "No smoking", "reading": "きんえん"}, {"expression": "熱", "meaning": "Fever, temperature", "reading": "ねつ"}, {"expression": "病気", "meaning": "Illness, disease", "reading": "びょうき"}, {"expression": "薬", "meaning": "Medicine", "reading": "くすり"}, {"expression": "上着", "meaning": "Jacket, outerwear", "reading": "うわぎ"}, {"expression": "下着", "meaning": "Underwear", "reading": "したぎ"}, {"expression": "のど", "meaning": "Throat", "reading": "のど"}, {"expression": "かぜ", "meaning": "Cold, flu", "reading": "かぜ"}, {"expression": "お大事に", "meaning": "Take care of yourself", "reading": "おだいじに"}], "Lesson 18": [{"expression": "できます", "meaning": "Can, be able to", "reading": "できます"}, {"expression": "洗います", "meaning": "Wash", "reading": "あらいます"}, {"expression": "弾きます", "meaning": "Play (instrument)", "reading": "ひきます"}, {"expression": "歌います", "meaning": "Sing", "reading": "うたいます"}, {"expression": "集めます", "meaning": "Collect, gather", "reading": "あつめます"}, {"expression": "捨てます", "meaning": "Throw away", "reading": "すてます"}, {"expression": "運転します", "meaning": "Drive", "reading": "うんてんします"}, {"expression": "予約します", "meaning": "Reserve, book", "reading": "よやくします"}, {"expression": "ピアノ", "meaning": "Piano", "reading": "ピアノ"}, {"expression": "趣味", "meaning": "Hobby", "reading": "しゅみ"}, {"expression": "日記", "meaning": "Diary", "reading": "にっき"}, {"expression": "課長", "meaning": "Section head", "reading": "かちょう"}, {"expression": "部長", "meaning": "Department head", "reading": "ぶちょう"}, {"expression": "社長", "meaning": "Company president", "reading": "しゃちょう"}, {"expression": "動物", "meaning": "Animal", "reading": "どうぶつ"}, {"expression": "馬", "meaning": "Horse", "reading": "うま"}, {"expression": "インターネット", "meaning": "The Internet", "reading": "インターネット"}, {"expression": "特に", "meaning": "Especially", "reading": "とくに"}, {"expression": "なかなか", "meaning": "Not easily (with negatives)", "reading": "なかなか"}, {"expression": "ぜひ", "meaning": "By all means", "reading": "ぜひ"}], "Lesson 19": [{"expression": "登ります", "meaning": "Climb, go up", "reading": "のぼります"}, {"expression": "泊まります", "meaning": "Stay (at a hotel)", "reading": "とまります"}, {"expression": "掃除します", "meaning": "Clean (a room)", "reading": "そうじします"}, {"expression": "洗濯します", "meaning": "Do laundry", "reading": "せんたくします"}, {"expression": "なります", "meaning": "Become", "reading": "なります"}, {"expression": "眠い", "meaning": "Sleepy", "reading": "ねむい"}, {"expression": "強い", "meaning": "Strong", "reading": "つよい"}, {"expression": "弱い", "meaning": "Weak", "reading": "よわい"}, {"expression": "練習", "meaning": "Practice", "reading": "れんしゅう"}, {"expression": "ゴルフ", "meaning": "Golf", "reading": "ゴルフ"}, {"expression": "相撲", "meaning": "Sumo wrestling", "reading": "すもう"}, {"expression": "一度", "meaning": "Once", "reading": "いちど"}, {"expression": "一度も", "meaning": "Not once, never", "reading": "いちども"}, {"expression": "だんだん", "meaning": "Gradually", "reading": "だんだん"}, {"expression": "もうすぐ", "meaning": "Soon", "reading": "もうすぐ"}, {"expression": "ダイエット", "meaning": "Diet", "reading": "ダイエット"}, {"expression": "無理", "meaning": "Impossible, excessive", "reading": "むり"}], "Lesson 20": [{"expression": "要ります", "meaning": "Need, require", "reading": "いります"}, {"expression": "調べます", "meaning": "Check, investigate", "reading": "しらべます"}, {"expression": "修理します", "meaning": "Repair", "reading": "しゅうりします"}, {"expression": "僕", "meaning": "I (informal, men)", "reading": "ぼく"}, {"expression": "君", "meaning": "You (informal)", "reading": "きみ"}, {"expression": "うん", "meaning": "Yes (informal)", "reading": "うん"}, {"expression": "ううん", "meaning": "No (informal)", "reading": "ううん"}, {"expression": "ことば", "meaning": "Word, language", "reading": "ことば"}, {"expression": "着物", "meaning": "Kimono", "reading": "きもの"}, {"expression": "ビザ", "meaning": "Visa", "reading": "ビザ"}, {"expression": "初め", "meaning": "The beginning", "reading": "はじめ"}, {"expression": "終わり", "meaning": "The end", "reading": "おわり"}, {"expression": "こっち", "meaning": "This way (informal)", "reading": "こっち"}, {"expression": "そっち", "meaning": "That way (informal)", "reading": "そっち"}, {"expression": "どっち", "meaning": "Which one (informal)", "reading": "どっち"}, {"expression": "よかったら", "meaning": "If you like", "reading": "よかったら"}], "Lesson 21": [{"expression": "思います", "meaning": "Think", "reading": "おもいます"}, {"expression": "言います", "meaning": "Say", "reading": "いいます"}, {"expression": "勝ちます", "meaning": "Win", "reading": "かちます"}, {"expression": "負けます", "meaning": "Lose", "reading": "まけます"}, {"expression": "役に立ちます", "meaning": "Be useful", "reading": "やくにたちます"}, {"expression": "やめます", "meaning": "Quit, stop", "reading": "やめます"}, {"expression": "気をつけます", "meaning": "Pay attention, take care", "reading": "きをつけます"}, {"expression": "留学します", "meaning": "Study abroad", "reading": "りゅうがくします"}, {"expression": "不便", "meaning": "Inconvenient", "reading": "ふべん"}, {"expression": "自動車", "meaning": "Car, automobile", "reading": "じどうしゃ"}, {"expression": "交通", "meaning": "Transport, traffic", "reading": "こうつう"}, {"expression": "ニュース", "meaning": "News", "reading": "ニュース"}, {"expression": "アニメ", "meaning": "Anime", "reading": "アニメ"}, {"expression": "マンガ", "meaning": "Manga, comic book", "reading": "マンガ"}, {"expression": "夢", "meaning": "Dream", "reading": "ゆめ"}, {"expression": "試合", "meaning": "Game, match", "reading": "しあい"}, {"expression": "意見", "meaning": "Opinion", "reading": "いけん"}, {"expression": "地球", "meaning": "Earth", "reading": "ちきゅう"}, {"expression": "最近", "meaning": "Recently", "reading": "さいきん"}, {"expression": "たぶん", "meaning": "Probably, maybe", "reading": "たぶん"}, {"expression": "きっと", "meaning": "Surely, definitely", "reading": "きっと"}, {"expression": "もちろん", "meaning": "Of course", "reading": "もちろん"}], "Lesson 22": [{"expression": "着ます", "meaning": "Put on (shirt etc.)", "reading": "きます"}, {"expression": "はきます", "meaning": "Put on (shoes, trousers)", "reading": "はきます"}, {"expression": "かぶります", "meaning": "Put on (a hat)", "reading": "かぶります"}, {"expression": "生まれます", "meaning": "Be born", "reading": "うまれます"}, {"expression": "わたしたち", "meaning": "We", "reading": "わたしたち"}, {"expression": "コート", "meaning": "Coat", "reading": "コート"}, {"expression": "セーター", "meaning": "Sweater", "reading": "セーター"}, {"expression": "スーツ", "meaning": "Suit", "reading": "スーツ"}, {"expression": "帽子", "meaning": "Hat, cap", "reading": "ぼうし"}, {"expression": "眼鏡", "meaning": "Glasses", "reading": "めがね"}, {"expression": "都合", "meaning": "Convenience, circumstances", "reading": "つごう"}, {"expression": "おめでとうございます", "meaning": "Congratulations", "reading": "おめでとうございます"}, {"expression": "家賃", "meaning": "Rent", "reading": "やちん"}, {"expression": "和室", "meaning": "Japanese-style room", "reading": "わしつ"}, {"expression": "布団", "meaning": "Japanese bedding", "reading": "ふとん"}], "Lesson 23": [{"expression": "回します", "meaning": "Turn (rotate)", "reading": "まわします"}, {"expression": "歩きます", "meaning": "Walk", "reading": "あるきます"}, {"expression": "渡ります", "meaning": "Cross (a bridge)", "reading": "わたります"}, {"expression": "曲がります", "meaning": "Turn (direction)", "reading": "まがります"}, {"expression": "寂しい", "meaning": "Lonely", "reading": "さびしい"}, {"expression": "音", "meaning": "Sound", "reading": "おと"}, {"expression": "故障", "meaning": "Breakdown", "reading": "こしょう"}, {"expression": "道", "meaning": "Road, way", "reading": "みち"}, {"expression": "交差点", "meaning": "Crossroads, intersection", "reading": "こうさてん"}, {"expression": "信号", "meaning": "Traffic light", "reading": "しんごう"}, {"expression": "角", "meaning": "Corner", "reading": "かど"}, {"expression": "橋", "meaning": "Bridge", "reading": "はし"}, {"expression": "駐車場", "meaning": "Car park, parking lot", "reading": "ちゅうしゃじょう"}, {"expression": "引きます", "meaning": "Pull", "reading": "ひきます"}, {"expression": "変えます", "meaning": "Change", "reading": "かえます"}, {"expression": "建物", "meaning": "Building", "reading": "たてもの"}], "Lesson 24": [{"expression": "くれます", "meaning": "Give (to me)", "reading": "くれます"}, {"expression": "直します", "meaning": "Repair, correct", "reading": "なおします"}, {"expression": "連れて行きます", "meaning": "Take (someone)", "reading": "つれていきます"}, {"expression": "連れて来ます", "meaning": "Bring (someone)", "reading": "つれてきます"}, {"expression": "紹介します", "meaning": "Introduce", "reading": "しょうかいします"}, {"expression": "案内します", "meaning": "Show around, guide", "reading": "あんないします"}, {"expression": "説明します", "meaning": "Explain", "reading": "せつめいします"}, {"expression": "おじいさん", "meaning": "Grandfather, old man", "reading": "おじいさん"}, {"expression": "おばあさん", "meaning": "Grandmother, old woman", "reading": "おばあさん"}, {"expression": "準備", "meaning": "Preparation", "reading": "じゅんび"}, {"expression": "引っ越し", "meaning": "Moving out", "reading": "ひっこし"}, {"expression": "ホームステイ", "meaning": "Homestay", "reading": "ホームステイ"}, {"expression": "全部", "meaning": "All, everything", "reading": "ぜんぶ"}, {"expression": "自分で", "meaning": "By oneself", "reading": "じぶんで"}], "Lesson 25": [{"expression": "考えます", "meaning": "Think, consider", "reading": "かんがえます"}, {"expression": "着きます", "meaning": "Arrive", "reading": "つきます"}, {"expression": "足ります", "meaning": "Be enough, sufficient", "reading": "たります"}, {"expression": "田舎", "meaning": "Countryside, hometown", "reading": "いなか"}, {"expression": "チャンス", "meaning": "Chance, opportunity", "reading": "チャンス"}, {"expression": "もし", "meaning": "If", "reading": "もし"}, {"expression": "意味", "meaning": "Meaning", "reading": "いみ"}, {"expression": "もしもし", "meaning": "Hello (on the phone)", "reading": "もしもし"}, {"expression": "転勤", "meaning": "Job transfer", "reading": "てんきん"}, {"expression": "こと", "meaning": "Thing, matter", "reading": "こと"}, {"expression": "暇", "meaning": "Free time", "reading": "ひま"}, {"expression": "頑張ります", "meaning": "Do one's best", "reading": "がんばります"}, {"expression": "ベトナム", "meaning": "Vietnam", "reading": "ベトナム"}]};
+
+const LESSONS = Object.keys(RAW).sort((a,b)=>parseInt(a.split(" ")[1])-parseInt(b.split(" ")[1]));
+const BOOK1 = LESSONS.slice(0,12), BOOK2 = LESSONS.slice(12);
+const EXAM_DATE_POORI = "2025-07-05";
+const NEW_CARDS_CUTOFF_DAYS = 21;
+
+// ── FSRS-4.5 ──────────────────────────────────────────────────────────────────
+const W=[0.4072,1.1829,3.1262,15.4722,7.2102,0.5316,1.0651,0.0589,1.5330,0.1544,1.0070,1.9395,0.1100,0.2900,2.2700,0.2500,2.9898,0.5100,0.8360];
+const DECAY=-0.5, FACTOR=Math.pow(0.9,1/DECAY)-1;
+function fsrsIS(r){return Math.max(W[r-1],0.1);}
+function fsrsID(r){return Math.min(Math.max(W[4]-Math.exp(W[5]*(r-1))+1,1),10);}
+function fsrsFC(e,s){return Math.pow(1+FACTOR*e/s,DECAY);}
+function fsrsNS(d,s,r,rating){
+  if(rating===1)return W[11]*Math.pow(d,-W[12])*(Math.pow(s+1,W[13])-1)*Math.exp(W[14]*(1-r));
+  const hp=rating===2?W[15]:1,eb=rating===4?W[16]:1;
+  return s*(Math.exp(W[8])*(11-d)*Math.pow(s,-W[9])*(Math.exp(W[10]*(1-r))-1)*hp*eb+1);
+}
+function fsrsND(d,rating){return Math.min(Math.max(d-W[6]*(rating-3)+W[7]*(W[4]-(d-W[6]*(rating-3))),1),10);}
+function fsrsNI(s,ret=0.9){return Math.max(1,Math.round(s/FACTOR*(Math.pow(ret,1/DECAY)-1)));}
+function nextFSRS(card,rating){
+  const s0=card.stability,now=Date.now();
+  if(!s0||card.reps===0){
+    const stability=fsrsIS(rating),difficulty=fsrsID(rating);
+    return{stability,difficulty,interval:rating===1?0:fsrsNI(stability),reps:rating===1?0:1,lastReview:now};
+  }
+  const elapsed=Math.max(0,(now-(card.lastReview||now))/86400000);
+  const ret=fsrsFC(elapsed,s0);
+  const newD=fsrsND(card.difficulty||5,rating),newS=fsrsNS(newD,s0,ret,rating);
+  return{stability:Math.max(newS,0.1),difficulty:newD,interval:rating===1?0:fsrsNI(newS),reps:rating===1?0:(card.reps||0)+1,lastReview:now};
+}
+function previewIntervals(card){return[1,2,3,4].map(r=>fmtDays(nextFSRS(card,r).interval));}
+function fmtDays(d){
+  if(d===0)return"<10m";if(d===1)return"1d";
+  if(d<30)return`${d}d`;if(d<365)return`${Math.round(d/30)}mo`;
+  return`${(d/365).toFixed(1)}y`;
+}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// ── Study plan ────────────────────────────────────────────────────────────────
+function calcDailyNewCap(examDate){
+  if(!examDate)return 15;
+  const today=new Date();today.setHours(0,0,0,0);
+  const exam=new Date(examDate);exam.setHours(0,0,0,0);
+  const totalDays=Math.max(1,Math.round((exam-today)/86400000));
+  const activeDays=Math.max(1,totalDays-NEW_CARDS_CUTOFF_DAYS);
+  return Math.max(5,Math.min(30,Math.ceil(998/activeDays)));
+}
+function daysUntilExam(examDate){
+  if(!examDate)return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  const exam=new Date(examDate);exam.setHours(0,0,0,0);
+  return Math.round((exam-today)/86400000);
+}
+
+// ── Greetings ─────────────────────────────────────────────────────────────────
+const GP=[
+  (n,d)=>`いらっしゃい、${n}！ ${d} days until the exam — let's go! 🔥`,
+  (n,d)=>`おかえり、${n}！ Every card today is one more word you own. 💪`,
+  (n,d)=>`Welcome back, ${n}！ ${d} days left — you're right on track. ✨`,
+  (n,d)=>`${n}、がんばれ！ The streak continues. Don't break it now! 🎯`,
+  (n,d)=>`Ready to study, ${n}？ ${d} days to go — one session at a time. 📚`,
+  (n,d)=>`お疲れ様、${n}！ Consistency beats intensity. You've got this. 🌸`,
+  (n,d)=>`${n}、今日も！ ${d} days left. Each review makes the next one easier. ⚡`,
+  (n,d)=>`Welcome, ${n}！ The best time to review is right now. 始めよう！ 🎌`,
+  (n,d)=>`${n}！ Only ${d} days left — but you're building something real. 🌟`,
+  (n,d)=>`おはよう、${n}！ Another day, another set of words locked in. 🗝️`,
+];
+const GA=[
+  n=>`Hey ${n}！ Testing mode — break things, that's the job. 🛠️`,
+  n=>`Welcome back, ${n}！ What are we poking at today? 👀`,
+  n=>`${n} in the house！ No exam pressure, just vibes. 😎`,
+  n=>`おかえり、${n}！ Admin mode activated. 🔧`,
+  n=>`Hey ${n}！ You're the quality control around here. 🧪`,
+];
+function getGreeting(profile,days){
+  const seed=new Date().getDate();
+  if(profile==="Poori"){const fn=GP[seed%GP.length];return fn("Poori",days??"?");}
+  const fn=GA[seed%GA.length];return fn("Abdul");
+}
+
+// ── Default profile ───────────────────────────────────────────────────────────
+function defaultProfile(name){
+  const isPoori=name==="Poori";
+  return{
+    cardStates:{},
+    settings:{
+      examDate:isPoori?EXAM_DATE_POORI:null,
+      newCardCap:isPoori?calcDailyNewCap(EXAM_DATE_POORI):20,
+      capOverride:false,
+      productionEnabled:false,
+      selectedLessons:[...LESSONS],
+    },
+    dailyLog:{},
+  };
+}
+function cardKey(lesson,idx,dir){return`${lesson}::${idx}::${dir}`;}
+
+// ── Export / Import helpers ───────────────────────────────────────────────────
+function exportData(name,data){
+  const blob=new Blob([JSON.stringify({profile:name,exportedAt:new Date().toISOString(),data},null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`mnn-backup-${name}-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(a.href);
+}
+function importData(onSuccess){
+  const input=document.createElement("input");
+  input.type="file";input.accept=".json";
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        if(parsed.data)onSuccess(parsed.data);
+        else alert("Invalid backup file.");
+      }catch{alert("Could not read file.");}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+// ── Theme ─────────────────────────────────────────────────────────────────────
+let isDark = localStorage.getItem('mnn-theme') !== 'light';
+function applyTheme() {
+  document.body.classList.toggle('light', !isDark);
+  localStorage.setItem('mnn-theme', isDark ? 'dark' : 'light');
+}
+applyTheme();
+
+let state = {
+  activeProfile: null,
+  profileData: null,
+  loading: false,
+  tab: "study",
+  showDeckBrowser: false,
+  filterBook: "all",
+  screen: "home", // home | review | summary
+  queue: [],
+  queueIdx: 0,
+  flipped: false,
+  sessionResults: [],
+  saveTimer: null,
+};
+
+// ── Render engine ─────────────────────────────────────────────────────────────
+function render(){
+  const root=document.getElementById("app");
+  root.innerHTML="";
+  if(state.loading){
+    root.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--text2);font-family:var(--font-ui)">Loading...</div>`;
+    return;
+  }
+  if(!state.activeProfile){renderProfileSelector(root);return;}
+  if(state.screen==="review"){renderReview(root);return;}
+  if(state.screen==="summary"){renderSummary(root);return;}
+  renderMain(root);
+}
+
+// ── Save with debounce ────────────────────────────────────────────────────────
+function scheduleSave(){
+  if(state.saveTimer)clearTimeout(state.saveTimer);
+  state.saveTimer=setTimeout(()=>{
+    if(state.activeProfile&&state.profileData)
+      window._fbSave(state.activeProfile,state.profileData);
+  },1500);
+}
+function setState(patch,doRender=true){
+  Object.assign(state,patch);
+  if(patch.profileData!==undefined)scheduleSave();
+  if(doRender)render();
+}
+function updateProfile(patch){
+  setState({profileData:{...state.profileData,...patch}});
+}
+function updateSettings(patch){
+  const s={...state.profileData.settings,...patch};
+  if(patch.examDate!==undefined&&!patch.capOverride){
+    s.newCardCap=calcDailyNewCap(patch.examDate);s.capOverride=false;
+  }
+  updateProfile({settings:s});
+}
+function updateCardState(key,cs){
+  const cardStates={...state.profileData.cardStates,[key]:cs};
+  updateProfile({cardStates});
+}
+function logToday(isNew,isAgain){
+  const today=new Date().toISOString().slice(0,10);
+  const log=state.profileData.dailyLog||{};
+  const d=log[today]||{reviewed:0,newSeen:0,againCount:0};
+  updateProfile({dailyLog:{...log,[today]:{reviewed:d.reviewed+1,newSeen:d.newSeen+(isNew?1:0),againCount:d.againCount+(isAgain?1:0)}}});
+}
+
+// ── Profile selector ──────────────────────────────────────────────────────────
+function renderProfileSelector(root){
+  const days=daysUntilExam(EXAM_DATE_POORI);
+  root.innerHTML=`
+  <div style="min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-ui);">
+    <div style="position:absolute;top:16px;right:16px;" id="profileThemeBtn"></div>
+    <div class="slide-in" style="text-align:center;margin-bottom:40px;">
+      <div style="font-size:30px;font-family:var(--font-jp);font-weight:300;letter-spacing:4px;color:var(--text);margin-bottom:8px;">みんなの日本語</div>
+      <div style="font-size:12px;color:var(--text3);letter-spacing:2px;">SELECT PROFILE</div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;padding:0 20px;">
+      <div class="btn profile-card" data-name="Poori" style="width:170px;padding:28px 20px;border-radius:16px;background:var(--surface);border:1px solid var(--gold);text-align:center;box-shadow:0 4px 24px rgba(200,151,58,0.12);">
+        <div style="font-size:38px;margin-bottom:12px;">🌸</div>
+        <div style="font-size:20px;font-weight:500;color:var(--text);margin-bottom:6px;">Poori</div>
+        <div style="font-size:11px;color:var(--gold);letter-spacing:1px;">${days}d until exam</div>
+      </div>
+      <div class="btn profile-card" data-name="Abdul" style="width:170px;padding:28px 20px;border-radius:16px;background:var(--surface);border:1px solid var(--accent);text-align:center;box-shadow:0 4px 24px rgba(77,157,224,0.12);">
+        <div style="font-size:38px;margin-bottom:12px;">🛠️</div>
+        <div style="font-size:20px;font-weight:500;color:var(--text);margin-bottom:6px;">Abdul</div>
+        <div style="font-size:11px;color:var(--accent);letter-spacing:1px;">Testing</div>
+      </div>
+    </div>
+  </div>`;
+  root.querySelectorAll(".profile-card").forEach(el=>{
+    el.addEventListener("click",()=>selectProfile(el.dataset.name));
+  });
+  renderThemeBtn("profileThemeBtn");
+}
+
+async function selectProfile(name){
+  setState({loading:true});
+  let data=await window._fbLoad(name);
+  if(!data)data=defaultProfile(name);
+  if(!data.settings.capOverride&&data.settings.examDate)
+    data.settings.newCardCap=calcDailyNewCap(data.settings.examDate);
+  setState({activeProfile:name,profileData:data,loading:false,tab:"study",screen:"home"});
+}
+
+// ── Review queue ──────────────────────────────────────────────────────────────
+function buildQueue(){
+  const{cardStates,settings}=state.profileData;
+  const{selectedLessons,newCardCap,productionEnabled}=settings;
+  const dirs=productionEnabled?["rec","pro"]:["rec"];
+  const all=[];
+  for(const lesson of [...selectedLessons].sort()){
+    (RAW[lesson]||[]).forEach((card,idx)=>{
+      dirs.forEach(dir=>{
+        const key=cardKey(lesson,idx,dir);
+        const st=cardStates[key]||{stability:0,difficulty:5,interval:0,reps:0,lastReview:0};
+        all.push({...card,lesson,idx,key,dir,...st});
+      });
+    });
+  }
+  const newCards=shuffle(all.filter(c=>c.reps===0));
+  const due=shuffle(all.filter(c=>c.reps>0));
+  return[...due,...newCards.slice(0,newCardCap)];
+}
+
+// ── Review screen ─────────────────────────────────────────────────────────────
+function renderReview(root){
+  const{queue,queueIdx,flipped}=state;
+  const card=queue[queueIdx];
+  if(!card){setState({screen:"summary"});return;}
+  const pct=queue.length?(queueIdx/queue.length)*100:0;
+  const previews=previewIntervals(card);
+  const isPoori=state.activeProfile==="Poori";
+  const ratings=[
+    {r:1,label:"Again",key:"1",bg:"var(--again-bg)",border:"var(--again)",text:"var(--again)"},
+    {r:2,label:"Hard", key:"2",bg:"var(--hard-bg)", border:"var(--hard)", text:"var(--hard)"},
+    {r:3,label:"Good", key:"3",bg:"var(--good-bg)", border:"var(--good)", text:"var(--good)"},
+    {r:4,label:"Easy", key:"4",bg:"var(--easy-bg)", border:"var(--easy)", text:"var(--easy)"},
+  ];
+
+  const frontContent = card.dir==="pro"
+    ? `<div style="font-size:28px;font-weight:400;color:var(--text);text-align:center;line-height:1.5;padding:0 8px;">${card.meaning}</div>`
+    : `<div style="font-size:48px;font-family:var(--font-jp);font-weight:300;color:var(--text);letter-spacing:3px;text-align:center;line-height:1.3;">${card.expression}</div>
+       ${card.reading&&card.reading!==card.expression?`<div style="font-size:19px;font-family:var(--font-jp);color:#a8d8a8;letter-spacing:3px;margin-top:8px;">${card.reading}</div>`:""}`;
+
+  const backContent = card.dir==="pro"
+    ? `<div style="font-size:36px;font-family:var(--font-jp);color:#7ec8f4;font-weight:300;letter-spacing:3px;text-align:center;">${card.expression}</div>
+       ${card.reading&&card.reading!==card.expression?`<div style="font-size:19px;color:#a8d8a8;font-family:var(--font-jp);letter-spacing:3px;margin-top:8px;">${card.reading}</div>`:""}` 
+    : `<div style="font-size:20px;font-family:var(--font-jp);color:#7ec8f4;font-weight:300;letter-spacing:2px;">${card.expression}</div>
+       <div style="width:40px;height:1px;background:var(--border2);margin:8px 0;"></div>
+       <div style="font-size:24px;color:var(--text);font-weight:400;text-align:center;line-height:1.5;max-width:380px;">${card.meaning}</div>`;
+
+  root.innerHTML=`
+  <div style="min-height:100vh;background:var(--bg);display:flex;flex-direction:column;font-family:var(--font-ui);">
+    <div style="height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;">
+      <div class="btn" id="backBtn" style="font-size:13px;color:var(--text2);padding:4px 8px;border-radius:5px;">← Back</div>
+      <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:2px;transition:width .3s;"></div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);min-width:60px;text-align:right;">${queueIdx+1} / ${queue.length}</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px 12px;">
+      <div style="font-size:11px;color:var(--text3);letter-spacing:2px;margin-bottom:16px;text-transform:uppercase;display:flex;gap:10px;align-items:center;">
+        <span>${card.lesson}</span>
+        <span style="color:${card.dir==="pro"?"var(--gold)":"var(--accent)"};background:${card.dir==="pro"?"rgba(200,151,58,0.12)":"rgba(77,157,224,0.12)"};padding:1px 7px;border-radius:4px;font-size:10px;">${card.dir==="pro"?"Production":"Recognition"}</span>
+      </div>
+      <div class="card-wrap pop" id="cardWrap" style="width:100%;max-width:560px;min-height:260px;cursor:${flipped?"default":"pointer"};">
+        <div class="card-inner${flipped?" flipped":""}" style="min-height:260px;">
+          <div class="card-face" style="background:var(--surface);border:1px solid var(--border2);padding:40px 32px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;box-shadow:0 4px 24px rgba(0,0,0,0.4);gap:8px;">
+            ${frontContent}
+            <div style="margin-top:12px;font-size:11px;color:var(--text3);letter-spacing:1px;">tap · space · enter</div>
+          </div>
+          <div class="card-face card-back-face" style="background:var(--surface);border:1px solid var(--border2);padding:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;box-shadow:0 4px 24px rgba(0,0,0,0.4);gap:8px;">
+            ${backContent}
+          </div>
+        </div>
+      </div>
+      <div id="ratingBtns" style="display:flex;gap:10px;margin-top:24px;width:100%;max-width:560px;opacity:${flipped?1:0};pointer-events:${flipped?"auto":"none"};transition:opacity .2s;">
+        ${ratings.map((c,i)=>`
+          <div class="rating-btn" data-rating="${c.r}" style="flex:1;padding:12px 8px;background:${c.bg};border:1px solid ${c.border};border-radius:8px;text-align:center;">
+            <div style="font-size:11px;color:${c.text};font-weight:600;margin-bottom:2px;opacity:.85;">${previews[i]}</div>
+            <div style="font-size:15px;font-weight:500;color:${c.text};">${c.label}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">[${c.key}]</div>
+          </div>`).join("")}
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:var(--text3);">Again · Hard · Good · Easy — or press 1 2 3 4</div>
+    </div>
+  </div>`;
+
+  document.getElementById("backBtn").addEventListener("click",()=>setState({screen:"home",flipped:false}));
+  document.getElementById("cardWrap").addEventListener("click",()=>{if(!state.flipped)setState({flipped:true});});
+  document.querySelectorAll(".rating-btn").forEach(el=>{
+    el.addEventListener("click",()=>handleRating(parseInt(el.dataset.rating)));
+  });
+}
+
+function handleRating(rating){
+  const{queue,queueIdx,sessionResults}=state;
+  const card=queue[queueIdx];
+  const next=nextFSRS(card,rating);
+  updateCardState(card.key,next);
+  logToday(card.reps===0,rating===1);
+  const results=[...sessionResults,{card,rating}];
+  let newQueue=[...queue];
+  if(rating===1&&queueIdx<newQueue.length-1)
+    newQueue.splice(Math.min(queueIdx+3,newQueue.length),0,{...card,...next});
+  if(queueIdx+1>=newQueue.length){setState({screen:"summary",sessionResults:results,queue:newQueue});}
+  else setState({queue:newQueue,queueIdx:queueIdx+1,flipped:false,sessionResults:results});
+}
+
+// keyboard shortcuts
+document.addEventListener("keydown",e=>{
+  if(state.screen!=="review")return;
+  if(e.key===" "||e.key==="Enter"){e.preventDefault();if(!state.flipped)setState({flipped:true});}
+  if(state.flipped){
+    if(e.key==="1")handleRating(1);if(e.key==="2")handleRating(2);
+    if(e.key==="3")handleRating(3);if(e.key==="4")handleRating(4);
+  }
+});
+
+// ── Summary ───────────────────────────────────────────────────────────────────
+function renderSummary(root){
+  const{sessionResults}=state;
+  const counts=[1,2,3,4].map(r=>sessionResults.filter(x=>x.rating===r).length);
+  const labels=["Again","Hard","Good","Easy"],colors=["var(--again)","var(--hard)","var(--good)","var(--easy)"];
+  root.innerHTML=`
+  <div style="min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-ui);padding:32px;gap:24px;">
+    <div class="fade-up" style="text-align:center;">
+      <div style="font-size:13px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Session Complete</div>
+      <div style="font-size:36px;font-weight:500;">${sessionResults.length} cards reviewed</div>
+    </div>
+    <div class="fade-up" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      ${labels.map((l,i)=>`<div style="text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 28px;min-width:90px;"><div style="font-size:28px;font-weight:500;color:${colors[i]};">${counts[i]}</div><div style="font-size:12px;color:var(--text2);margin-top:4px;">${l}</div></div>`).join("")}
+    </div>
+    <div class="fade-up" style="display:flex;gap:10px;">
+      <div class="btn" id="studyAgain" style="padding:10px 22px;border-radius:7px;background:var(--accent);color:#fff;font-size:14px;font-weight:500;">Study Again</div>
+      <div class="btn" id="goHome" style="padding:10px 22px;border-radius:7px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:14px;">Home</div>
+    </div>
+  </div>`;
+  document.getElementById("studyAgain").addEventListener("click",()=>{
+    const q=buildQueue();setState({queue:q,queueIdx:0,flipped:false,sessionResults:[],screen:"review"});
+  });
+  document.getElementById("goHome").addEventListener("click",()=>setState({screen:"home"}));
+}
+
+// ── Main shell ────────────────────────────────────────────────────────────────
+function renderMain(root){
+  const{tab,showDeckBrowser,filterBook,profileData,activeProfile}=state;
+  const{settings,cardStates,dailyLog}=profileData;
+  const isPoori=activeProfile==="Poori";
+  const days=daysUntilExam(settings.examDate);
+  const greeting=getGreeting(activeProfile,days);
+  const today=new Date().toISOString().slice(0,10);
+  const tlog=dailyLog[today]||{reviewed:0,newSeen:0,againCount:0};
+  const againRate=tlog.reviewed>0?Math.round(tlog.againCount/tlog.reviewed*100):null;
+  const totalVocab=settings.selectedLessons.reduce((s,l)=>s+(RAW[l]?.length||0),0);
+  const totalStudied=settings.selectedLessons.reduce((s,l)=>s+(RAW[l]||[]).filter((_,i)=>cardStates[cardKey(l,i,"rec")]?.reps>0).length,0);
+  const dueCount=settings.selectedLessons.reduce((s,l)=>{
+    const cards=RAW[l]||[];
+    return s+cards.filter((_,i)=>{
+      const dirs=settings.productionEnabled?["rec","pro"]:["rec"];
+      return dirs.some(d=>{const st=cardStates[cardKey(l,i,d)];return st&&st.reps>0&&st.interval<=1;});
+    }).length;
+  },0);
+  const newLeft=Math.max(0,settings.newCardCap-tlog.newSeen);
+  const displayLessons=filterBook==="1"?BOOK1:filterBook==="2"?BOOK2:LESSONS;
+  const accentColor=isPoori?"var(--gold)":"var(--accent)";
+
+  root.innerHTML=`
+  <div style="min-height:100vh;background:var(--bg);font-family:var(--font-ui);display:flex;flex-direction:column;">
+    <!-- Header -->
+    <div style="height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;">
+      <div style="font-size:17px;font-family:var(--font-jp);font-weight:300;color:var(--text);letter-spacing:1px;">みんなの日本語</div>
+      <div style="width:1px;height:18px;background:var(--border2);"></div>
+      <div style="flex:1;font-size:13px;color:${accentColor};font-weight:500;">${activeProfile}</div>
+      ${days!==null?`<div style="font-size:12px;color:var(--text3);background:var(--surface2);padding:3px 10px;border-radius:20px;">${days}d left</div>`:""}
+      <div class="btn" id="switchBtn" style="font-size:12px;color:var(--text3);padding:4px 8px;border-radius:5px;border:1px solid var(--border);">Switch</div>
+      <div id="themeBtn"></div>
+    </div>
+    <!-- Nav -->
+    <div style="display:flex;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;">
+      ${["study","progress","settings"].map(id=>`
+        <div class="nav-tab tab-btn" data-tab="${id}" style="padding:10px 18px;font-size:13px;font-weight:${tab===id?500:400};color:${tab===id?"var(--text)":"var(--text2)"};border-bottom:${tab===id?`2px solid ${accentColor}`:"2px solid transparent"};margin-bottom:-1px;">
+          ${id.charAt(0).toUpperCase()+id.slice(1)}
+        </div>`).join("")}
+    </div>
+    <!-- Content -->
+    <div style="flex:1;overflow:auto;" id="tabContent"></div>
+  </div>`;
+
+  document.getElementById("switchBtn").addEventListener("click",()=>setState({activeProfile:null,profileData:null,screen:"home"}));
+  renderThemeBtn("themeBtn");
+  document.querySelectorAll(".tab-btn").forEach(el=>{
+    el.addEventListener("click",()=>setState({tab:el.dataset.tab}));
+  });
+
+  const content=document.getElementById("tabContent");
+
+  // ── Study tab ────────────────────────────────────────────────────────────────
+  if(tab==="study"){
+    content.innerHTML=`
+    <div style="max-width:640px;margin:0 auto;padding:24px 16px;">
+      <div class="fade-up" style="margin-bottom:20px;padding:18px 22px;background:var(--surface);border:1px solid ${accentColor};border-radius:12px;opacity:.92;">
+        <div style="font-size:14px;color:var(--text);line-height:1.7;">${greeting}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;">
+          <div style="font-size:22px;font-weight:500;color:var(--accent);">${dueCount}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">Reviews due</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;">
+          <div style="font-size:22px;font-weight:500;color:${accentColor};">${tlog.newSeen}/${settings.newCardCap}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">New today</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;">
+          <div style="font-size:22px;font-weight:500;color:${againRate!==null&&againRate>35?"var(--again)":"var(--good)"};">${againRate!==null?againRate+"%":"—"}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">Again rate</div>
+        </div>
+      </div>
+      <div class="btn" id="startBtn" style="width:100%;padding:16px;border-radius:12px;text-align:center;background:${accentColor};color:#fff;font-size:16px;font-weight:600;margin-bottom:20px;box-shadow:0 4px 20px ${isPoori?"rgba(200,151,58,0.3)":"rgba(77,157,224,0.3)"};">
+        ${dueCount>0?`Study Now — ${dueCount+newLeft} cards`:`Study Now — ${newLeft} new cards`}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:13px;color:var(--text2);font-weight:500;">Deck Browser</div>
+        <div class="btn" id="deckToggle" style="font-size:12px;padding:4px 12px;border-radius:20px;background:${showDeckBrowser?"var(--accent)":"var(--surface2)"};color:${showDeckBrowser?"#fff":"var(--text2)"};border:1px solid ${showDeckBrowser?"var(--accent)":"var(--border2)"};">${showDeckBrowser?"Hide":"Show"}</div>
+      </div>
+      ${showDeckBrowser?renderDeckBrowserHTML(displayLessons,settings,cardStates,filterBook):""}
+    </div>`;
+
+    document.getElementById("startBtn").addEventListener("click",()=>{
+      const q=buildQueue();setState({queue:q,queueIdx:0,flipped:false,sessionResults:[],screen:"review"});
+    });
+    document.getElementById("deckToggle").addEventListener("click",()=>setState({showDeckBrowser:!showDeckBrowser}));
+    if(showDeckBrowser)attachDeckBrowserEvents(displayLessons,settings);
+  }
+
+  // ── Progress tab ─────────────────────────────────────────────────────────────
+  if(tab==="progress"){
+    const totalDaysStudied=Object.keys(dailyLog).length;
+    const totalReviews=Object.values(dailyLog).reduce((s,d)=>s+d.reviewed,0);
+    const pct=totalVocab?Math.round(totalStudied/totalVocab*100):0;
+    content.innerHTML=`
+    <div style="max-width:640px;margin:0 auto;padding:24px 16px;">
+      <div class="fade-up">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;">
+            <div style="font-size:28px;font-weight:500;color:${accentColor};">${totalStudied}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">words seen</div>
+            <div style="margin-top:8px;height:4px;background:var(--border);border-radius:2px;">
+              <div style="height:100%;width:${pct}%;background:${accentColor};border-radius:2px;"></div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct}% of ${totalVocab}</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;">
+            <div style="font-size:28px;font-weight:500;color:var(--good);">${totalDaysStudied}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">days studied</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:8px;">${totalReviews} total reviews</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:12px;font-weight:500;">Progress per lesson</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${LESSONS.map(l=>{
+            const cards=RAW[l]||[];
+            const seen=cards.filter((_,i)=>cardStates[cardKey(l,i,"rec")]?.reps>0).length;
+            const mastered=cards.filter((_,i)=>{const st=cardStates[cardKey(l,i,"rec")];return st&&st.reps>=3&&st.interval>=7;}).length;
+            const p=cards.length?Math.round(seen/cards.length*100):0;
+            const mp=seen?Math.round(mastered/seen*100):0;
+            const inSel=settings.selectedLessons.includes(l);
+            return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;opacity:${inSel?1:0.5};">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span style="font-size:12px;color:var(--text2);">${l}</span>
+                <span style="font-size:11px;color:var(--text3);">${seen}/${cards.length} seen · ${mastered} mastered</span>
+              </div>
+              <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${p}%;background:${accentColor};border-radius:3px;position:relative;">
+                  <div style="position:absolute;top:0;left:0;height:100%;width:${mp}%;background:var(--good);border-radius:3px;"></div>
+                </div>
+              </div>
+            </div>`;
+          }).join("")}
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text3);display:flex;gap:16px;">
+          <span><span style="color:${accentColor};">■</span> Seen</span>
+          <span><span style="color:var(--good);">■</span> Mastered (≥3 reviews, ≥7d interval)</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── Settings tab ──────────────────────────────────────────────────────────────
+  if(tab==="settings"){
+    content.innerHTML=`
+    <div style="max-width:540px;margin:0 auto;padding:24px 16px;">
+      <div class="fade-up" style="display:flex;flex-direction:column;gap:14px;">
+
+        <!-- Exam date -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px;">Exam Date</div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input type="date" id="examDateInput" value="${settings.examDate||""}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;font-family:var(--font-ui);"/>
+            ${settings.examDate?`<span style="font-size:12px;color:var(--text3);">${daysUntilExam(settings.examDate)}d left</span>`:""}
+          </div>
+        </div>
+
+        <!-- New card cap -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <div style="font-size:13px;font-weight:500;color:var(--text);">New cards / session</div>
+            <div style="font-size:12px;color:${settings.capOverride?"var(--gold)":"var(--text3)"};">${settings.capOverride?"Manual":"Auto"}</div>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">${settings.capOverride?"Override active — drag to change":`Auto-calculated from exam date (${settings.newCardCap}/day)`}</div>
+          <div style="display:flex;gap:12px;align-items:center;">
+            <input type="range" id="capSlider" min="5" max="40" step="1" value="${settings.newCardCap}" style="flex:1;"/>
+            <div id="capVal" style="font-size:16px;font-weight:600;color:var(--text);min-width:28px;text-align:right;">${settings.newCardCap}</div>
+          </div>
+          ${settings.capOverride&&settings.examDate?`<div class="btn" id="resetCap" style="margin-top:10px;font-size:12px;color:var(--accent);padding:4px 0;">↩ Reset to auto</div>`:""}
+        </div>
+
+        <!-- Production toggle -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Production cards (EN→JP)</div>
+            <div style="font-size:12px;color:var(--text3);">Harder. Recommended after recognition is solid.</div>
+          </div>
+          <div class="btn toggle-track" id="prodToggle" style="background:${settings.productionEnabled?"var(--good)":"var(--border2)"};">
+            <div class="toggle-thumb" style="left:${settings.productionEnabled?23:3}px;"></div>
+          </div>
+        </div>
+
+        <!-- Export / Import -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Backup & Restore</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Export saves all your card progress and settings to a file. Import restores from a backup.</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="btn" id="exportBtn" style="padding:9px 18px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:13px;">⬇ Export Backup</div>
+            <div class="btn" id="importBtn" style="padding:9px 18px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:13px;">⬆ Import Backup</div>
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px;">Profile</div>
+          <div style="font-size:13px;color:var(--text2);">Signed in as <span style="color:${accentColor};font-weight:500;">${activeProfile}</span></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px;">Data syncs to Firebase in real-time.</div>
+          <div class="btn" id="switchBtn2" style="margin-top:12px;font-size:12px;color:var(--again);padding:4px 0;">Switch Profile</div>
+        </div>
+      </div>
+    </div>`;
+
+    document.getElementById("examDateInput").addEventListener("change",e=>updateSettings({examDate:e.target.value,capOverride:false}));
+    const capSlider=document.getElementById("capSlider");
+    capSlider.addEventListener("input",e=>{
+      document.getElementById("capVal").textContent=e.target.value;
+    });
+    capSlider.addEventListener("change",e=>updateSettings({newCardCap:+e.target.value,capOverride:true}));
+    document.getElementById("resetCap")?.addEventListener("click",()=>updateSettings({capOverride:false}));
+    document.getElementById("prodToggle").addEventListener("click",()=>updateSettings({productionEnabled:!settings.productionEnabled}));
+    document.getElementById("exportBtn").addEventListener("click",()=>exportData(activeProfile,profileData));
+    document.getElementById("importBtn").addEventListener("click",()=>importData(data=>{
+      updateProfile(data);alert("Backup restored successfully!");
+    }));
+    document.getElementById("switchBtn2").addEventListener("click",()=>setState({activeProfile:null,profileData:null,screen:"home"}));
+  }
+}
+
+// ── Deck browser HTML + events ────────────────────────────────────────────────
+function renderDeckBrowserHTML(displayLessons,settings,cardStates,filterBook){
+  return`
+  <div class="fade-up">
+    <div style="display:flex;gap:2px;margin-bottom:12px;border-bottom:1px solid var(--border);">
+      ${[["all","All"],["1","Book 1"],["2","Book 2"]].map(([v,l])=>`
+        <div class="btn filter-btn" data-filter="${v}" style="padding:7px 14px;font-size:12px;color:${filterBook===v?"var(--accent)":"var(--text2)"};border-bottom:${filterBook===v?"2px solid var(--accent)":"2px solid transparent"};margin-bottom:-1px;">${l}</div>`).join("")}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+      <div class="btn" id="selAll" style="padding:4px 10px;border-radius:4px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);">All</div>
+      <div class="btn" id="selNone" style="padding:4px 10px;border-radius:4px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);">None</div>
+      ${displayLessons.map(l=>{
+        const sel=settings.selectedLessons.includes(l);
+        return`<div class="btn lesson-chip${sel?" sel":""}" data-lesson="${l}" style="padding:4px 12px;border-radius:4px;font-size:12px;background:${sel?"":"var(--surface2)"};border:1px solid ${sel?"":"var(--border)"};color:${sel?"":"var(--text2)"};">${l.replace("Lesson ","")}</div>`;
+      }).join("")}
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="display:grid;grid-template-columns:1fr auto auto auto;padding:8px 14px;border-bottom:1px solid var(--border);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">
+        <span>Lesson</span><span style="text-align:right;min-width:50px;">Cards</span><span style="text-align:right;min-width:50px;">Seen</span><span style="text-align:right;min-width:40px;">✓</span>
+      </div>
+      ${displayLessons.map((l,i)=>{
+        const cards=RAW[l]||[];
+        const sel=settings.selectedLessons.includes(l);
+        const seen=cards.filter((_,idx)=>cardStates[cardKey(l,idx,"rec")]?.reps>0).length;
+        return`<div class="deck-row btn" data-lesson="${l}" style="display:grid;grid-template-columns:1fr auto auto auto;padding:11px 14px;border-bottom:${i<displayLessons.length-1?"1px solid var(--border)":"none"};background:${sel?"rgba(77,157,224,0.05)":"transparent"};">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:16px;height:16px;border-radius:3px;border:1px solid ${sel?"var(--accent)":"var(--border2)"};background:${sel?"var(--accent)":"transparent"};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              ${sel?`<span style="color:#fff;font-size:10px;font-weight:700;">✓</span>`:""}
+            </div>
+            <span style="font-size:13px;color:${sel?"var(--text)":"var(--text2)"};">${l}</span>
+          </div>
+          <span style="font-size:12px;color:var(--text2);text-align:right;min-width:50px;align-self:center;">${cards.length}</span>
+          <span style="font-size:12px;text-align:right;min-width:50px;align-self:center;color:${seen>0?"var(--good)":"var(--text3)"};">${seen||"—"}</span>
+          <span style="font-size:12px;text-align:right;min-width:40px;align-self:center;color:${sel?"var(--accent)":"var(--text3)"};">${sel?"✓":"—"}</span>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+
+function attachDeckBrowserEvents(displayLessons,settings){
+  document.querySelectorAll(".filter-btn").forEach(el=>{
+    el.addEventListener("click",()=>setState({filterBook:el.dataset.filter}));
+  });
+  document.getElementById("selAll")?.addEventListener("click",()=>{
+    const next=[...new Set([...settings.selectedLessons,...displayLessons])];
+    updateSettings({selectedLessons:next});
+  });
+  document.getElementById("selNone")?.addEventListener("click",()=>{
+    const next=settings.selectedLessons.filter(l=>!displayLessons.includes(l));
+    if(next.length>0)updateSettings({selectedLessons:next});
+  });
+  document.querySelectorAll(".lesson-chip[data-lesson],.deck-row[data-lesson]").forEach(el=>{
+    el.addEventListener("click",e=>{
+      e.stopPropagation();
+      const l=el.dataset.lesson;
+      const sel=settings.selectedLessons.includes(l);
+      const next=sel?settings.selectedLessons.filter(x=>x!==l):[...settings.selectedLessons,l];
+      if(next.length>0)updateSettings({selectedLessons:next});
+    });
+  });
+}
+
+// ── Theme button helper ───────────────────────────────────────────────────────
+function renderThemeBtn(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="theme-toggle" id="themeToggle_${containerId}">
+      <span style="font-size:13px;">${isDark ? "🌙" : "☀️"}</span>
+      <div class="theme-toggle-track" style="background:${isDark ? "#4d9de0" : "#ccc"};">
+        <div class="theme-toggle-thumb" style="left:${isDark ? 19 : 3}px;"></div>
+      </div>
+    </div>`;
+  document.getElementById(`themeToggle_${containerId}`).addEventListener('click', () => {
+    isDark = !isDark;
+    applyTheme();
+    render();
+  });
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+onFbReady(()=>render());
+</script>
+</body>
+</html>
+
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 
